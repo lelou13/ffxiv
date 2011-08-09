@@ -1,0 +1,40 @@
+<h1>First time</h1>
+
+<p>Looks like this is your first time logging in. Please enter the info below.</p>
+
+<%= error_messages_for @user %>
+
+<form action="/signup" method="post">
+  <h3>About you</h3>
+  <p>
+    <label for="user_name">Nickname:</label>
+    <input id="user_name" type="text" name="user[name]" value="<%= @user.name %>" />
+  </p>
+
+  <h3>Your characters</h3>
+  <ul class="characters">
+    <% @characters.each_with_index do |character, i| %>
+      <li><label for="character_<%= i %>_name">Name:</label> <input id="character_<%= i %>_name" type="text" name="user[characters_attributes][<%= i %>][name]" value="<%= character.name %>" /></li>
+    <% end %>
+  </ul>
+  <p class="buttons">
+    <button>Submit</button>
+    or
+    <button>Add another character</button>
+  </p>
+</form>
+
+<script type="text/javascript">
+  var characters = <%= @characters.length %>;
+  function addCharacter() {
+    $('.characters').append('<li><label for="character_'+characters+'_name">Name:</label> <input id="character_'+characters+'_name" type="text" name="user[characters_attributes]['+characters+'][name]" />');
+    characters++;
+  }
+  $(function() {
+    $('p.buttons :first').button({
+      icons: { primary: 'ui-icon-circle-arrow-e' },
+    }).click(function() { $('form').submit(); return false; }).next().button({
+      icons: { primary: 'ui-icon-circle-plus' },
+    }).click(function() { addCharacter(); return false; });
+  });
+</script>
