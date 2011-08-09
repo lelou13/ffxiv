@@ -1,0 +1,12 @@
+body {
+  background-color: gray;
+}
+
+#main {
+  margin: 1em auto;
+  background-color: white;
+}
+
+#content {
+  font-size: 1.1em;
+}

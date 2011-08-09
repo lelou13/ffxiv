@@ -9,3 +9,6 @@ end
 
 path = FFXIV::Root + "lib" + "ffxiv"
 require path + "application"
+require path + "row"
+require path + "category"
+require path + "item"
