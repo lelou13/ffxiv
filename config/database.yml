@@ -1,0 +1,4 @@
+adapter: mysql2
+username: ffxiv
+password: ffxiv
+database: ffxiv
