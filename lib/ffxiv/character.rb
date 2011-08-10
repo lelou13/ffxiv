@@ -1,6 +1,7 @@
 module FFXIV
   class Character < Sequel::Model
     many_to_one :user
+    one_to_many :possessions
 
     def validate
       super

@@ -7,4 +7,7 @@ Sequel.migration do
       foreign_key :category_id, :categories
     end
   end
+  down do
+    drop_table(:items)
+  end
 end

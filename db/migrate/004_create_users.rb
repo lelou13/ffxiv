@@ -7,4 +7,7 @@ Sequel.migration do
       String :uid
     end
   end
+  down do
+    drop_table(:users)
+  end
 end

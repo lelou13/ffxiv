@@ -26,4 +26,7 @@ Sequel.migration do
       'Crystaliers'
     ])
   end
+  down do
+    drop_table(:rows)
+  end
 end

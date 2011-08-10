@@ -20,6 +20,16 @@ namespace :db do
     Sequel::Migrator.apply(FFXIV::Database, "db/migrate")
   end
 
+  desc "Rollback the database"
+  task :rollback, :env do |cmd, args|
+    env = args[:env] || "development"
+    Rake::Task['environment'].invoke(env)
+
+    require 'sequel/extensions/migration'
+    version = (row = FFXIV::Database[:schema_info].first) ? row[:version] : nil
+    Sequel::Migrator.apply(FFXIV::Database, "db/migrate", version - 1)
+  end
+
   desc "Nuke the database (drop all tables)"
   task :nuke, :env do |cmd, args|
     env = args[:env] || "development"

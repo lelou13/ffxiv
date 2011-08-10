@@ -1,13 +1,38 @@
 body {
   background-color: gray;
+  font-family: verdana;
 }
 
 #main {
   margin: 1em auto;
   background-color: white;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+}
+
+#header {
+  padding: 0.5em 0;
+  border-bottom: 1px solid gray;
+  background-color: lightgray;
+  -webkit-border-top-left-radius: 5px;
+  -webkit-border-top-right-radius: 5px;
+  -moz-border-radius-topleft: 5px;
+  -moz-border-radius-topright: 5px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+#title {
+  font-size: 2em;
+  font-weight: bold;
+}
+#userinfo {
+  padding-top: 0.8em;
+  text-align: right;
 }
 
 #content {
+  padding: 1em;
 }
 
 .errors {
@@ -33,4 +58,9 @@ body {
 }
 .errors li {
   margin-left: 1.5em;
+}
+
+table td {
+  padding: 0.2em;
+  vertical-align: middle;
 }

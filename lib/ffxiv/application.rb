@@ -8,10 +8,14 @@ module FFXIV
     use OmniAuth::Strategies::OpenID, OpenID::Store::Filesystem.new('/tmp'), opts.merge(:name => 'google', :identifier => 'https://www.google.com/accounts/o8/id')
 
     helpers do
-      def authenticate!
+      def authenticate!(options = nil)
         if current_user.nil?
-          session['return_to'] = request.path_info
-          redirect '/login'
+          if options.nil?
+            session['return_to'] = request.path_info
+            redirect '/login'
+          elsif !options[:redirect]
+            halt 401
+          end
         end
       end
 
@@ -20,6 +24,18 @@ module FFXIV
           @current_user = session['user_id'] ? User[session['user_id']] : nil
         end
         @current_user
+      end
+
+      def current_character
+        if @current_character.nil? && current_user
+          if session['character_id']
+            @current_character = current_user.characters_dataset[session['character_id']]
+          else
+            @current_character = current_user.characters_dataset.first
+            session['character_id'] = @current_character.id
+          end
+        end
+        @current_character
       end
 
       def error_messages_for(object)
@@ -41,8 +57,37 @@ module FFXIV
 
     get '/' do
       authenticate!
-      @items = Item.all
+      @possessions = current_character.possessions_dataset.eager_graph(:item => :category).order(:item__position)
+      @categories = Category.order(:row_id, :name).all
       erb :index
+    end
+
+    get '/items.json' do
+      authenticate!(:redirect => false)
+      content_type 'application/json'
+
+      ds = Item.dataset.eager_graph(:category)
+      if params['q']
+        ds = ds.filter(:name.like("%#{params['q']}%"))
+      end
+      ds.order(:name).inject({}) do |hsh, item|
+        hash[i.name] = {'category' => i.category.name, 'optimal_rank' => i.optimal_rank}
+        hash
+      end.to_json
+    end
+
+    post '/possessions.json' do
+      authenticate!(:redirect => false)
+      content_type 'application/json'
+
+      possession = Possession.new(params['possession'])
+      possession.character = current_character
+      if possession.valid?
+        possession.save
+        {'possession' => possession.values}.to_json
+      else
+        {'errors' => possession.errors}.to_json
+      end
     end
 
     get '/login' do

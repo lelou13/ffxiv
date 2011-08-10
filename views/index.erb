@@ -1,1 +1,105 @@
-hey
+<% @title = "Your inventory" %>
+<% if @possessions.empty? %>
+  <p>You don't have anything in your inventory.</p>
+<% else %>
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Type</th>
+        <th>Keep?</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @possessions.each_with_index do |possession, i| %>
+        <tr>
+          <td><%= possession.item.name %></td>
+          <td><%= possession.item.category.name %></td>
+          <td><%= possession.keep %></td>
+          <td><%= possession.note %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+<p>
+  <button id="add-items-button">Add items</button>
+</p>
+<div id="add-items-dialog" style="display: none;">
+  <form action="/possessions.json">
+    <div class="possession_existing_item" style="display: none;">
+      <input type="hidden" name="possession[item_id]" />
+    </div>
+    <div class="possession_new_item" style="display: none;">
+      <input type="hidden" name="possession[item_attributes][name]" />
+      <input type="hidden" name="possession[item_attributes][category_id]" />
+      <input type="hidden" name="possession[item_attributes][optimal_rank]" />
+    </div>
+    <table>
+      <tbody>
+        <tr class="item_name">
+          <td><label for="item_name">Item:</label></td>
+          <td><input id="item_name" type="text" /></td>
+        </tr>
+        <tr class="item_type">
+          <td><label for="item_type">Type:</label></td>
+          <td>
+            <div class="possession_new_item">
+              <select id="item_type">
+                <option></option>
+                <% @categories.each do |category| %>
+                  <option value="<%= category.id %>"><%= category.name %></option>
+                <% end %>
+              </select>
+            </div>
+            <div class="possession_existing_item" style="display: none;"></div>
+          </td>
+        </tr>
+        <tr class="item_optimal_rank">
+          <td><label for="item_optimal_rank">Rank:</label></td>
+          <td>
+            <div class="possession_new_item">
+              <input id="item_optimal_rank" type="text" name="possession[item_attributes][optimal_rank]" />
+            </div>
+            <div class="possession_existing_item" style="display: none;"></div>
+          </td>
+        </tr>
+        <tr class="possession_keep">
+          <td><label for="possession_keep">Keep?</label></td>
+          <td><input id="possession_keep" type="checkbox" name="possession[keep]" /></td>
+        </tr>
+        <tr class="possession_note">
+          <td><label for="possession_note">Note:</label></td>
+          <td><input id="possession_note" type="text" name="possession[note]" /></td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>
+
+<script type="text/javascript">
+  $(function() {
+    var dialog = $('#add-items-dialog').dialog({
+      autoOpen: false, title: 'Add item to your inventory',
+      width: 'auto', buttons: {
+        "Submit": function() {
+          $(this).find('form').submit();
+        },
+        "Cancel": function() {
+          $(this).dialog('close');
+        }
+      }
+    });
+    dialog.find('form').submit(function() {
+      var f = $(this);
+      $.post(f.attr('action'), f.serialize(), function(data, textStatus, jqXHR) {
+        // do stuff
+      });
+      return false;
+    });
+    $('#add-items-button').button({
+      icons: { primary: 'ui-icon-circle-plus' }
+    }).click(function() { dialog.dialog('open'); return false });
+  });
+</script>

@@ -6,4 +6,7 @@ Sequel.migration do
       foreign_key :user_id, :users
     end
   end
+  down do
+    drop_table(:characters)
+  end
 end
