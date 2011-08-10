@@ -8,6 +8,9 @@ module FFXIV
     use OmniAuth::Strategies::OpenID, OpenID::Store::Filesystem.new('/tmp'), opts.merge(:name => 'google', :identifier => 'https://www.google.com/accounts/o8/id')
 
     helpers do
+      include Rack::Utils
+      alias_method :h, :escape_html
+
       def authenticate!(options = nil)
         if current_user.nil?
           if options.nil?
@@ -57,7 +60,7 @@ module FFXIV
 
     get '/' do
       authenticate!
-      @possessions = current_character.possessions_dataset.eager_graph(:item => :category).order(:item__position)
+      @possessions = current_character.possessions_dataset.eager_graph(:item => :category).order(:item__position).all
       @categories = Category.order(:row_id, :name).all
       erb :index
     end
@@ -66,13 +69,13 @@ module FFXIV
       authenticate!(:redirect => false)
       content_type 'application/json'
 
-      ds = Item.dataset.eager_graph(:category)
+      ds = Item.order(:items__name).eager(:category)
       if params['q']
-        ds = ds.filter(:name.like("%#{params['q']}%"))
+        ds = ds.filter(:items__name.like("#{params['q']}%"))
       end
-      ds.order(:name).inject({}) do |hsh, item|
-        hash[i.name] = {'category' => i.category.name, 'optimal_rank' => i.optimal_rank}
-        hash
+
+      ds.all.collect do |item|
+        {'label' => item.name, 'id' => item.id, 'category' => item.category.name, 'optimal_rank' => item.optimal_rank}
       end.to_json
     end
 

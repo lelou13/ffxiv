@@ -24,29 +24,27 @@
   </table>
 <% end %>
 <p>
-  <button id="add-items-button">Add items</button>
+  <button id="add-item-button">Add items</button>
 </p>
-<div id="add-items-dialog" style="display: none;">
-  <form action="/possessions.json">
-    <div class="possession_existing_item" style="display: none;">
-      <input type="hidden" name="possession[item_id]" />
-    </div>
-    <div class="possession_new_item" style="display: none;">
-      <input type="hidden" name="possession[item_attributes][name]" />
-      <input type="hidden" name="possession[item_attributes][category_id]" />
-      <input type="hidden" name="possession[item_attributes][optimal_rank]" />
-    </div>
+<div id="add-item-dialog" style="display: none;">
+  <form id="add-item-form" action="/possessions.json">
+    <input id="item_id" type="hidden" name="possession[item_id]" />
     <table>
       <tbody>
         <tr class="item_name">
           <td><label for="item_name">Item:</label></td>
-          <td><input id="item_name" type="text" /></td>
+          <td>
+            <div class="possession_new_item">
+              <input id="item_name" type="text" name="possession[item_attributes][name]" />
+            </div>
+            <div class="possession_existing_item" style="display: none;"></div>
+          </td>
         </tr>
         <tr class="item_type">
           <td><label for="item_type">Type:</label></td>
           <td>
             <div class="possession_new_item">
-              <select id="item_type">
+              <select id="item_type" name="possession[item_attributes][category_id]">
                 <option></option>
                 <% @categories.each do |category| %>
                   <option value="<%= category.id %>"><%= category.name %></option>
@@ -79,8 +77,34 @@
 </div>
 
 <script type="text/javascript">
+  function resetForm() {
+    $('.possession_existing_item').hide();
+    $('.possession_new_item').show().find('input, select').val('');
+    $('#item_id').val('');
+    $('tr.item_optimal_rank').show();
+  }
+
   $(function() {
-    var dialog = $('#add-items-dialog').dialog({
+    $.getJSON('/items.json', function(data, status, xhr) {
+      $('#item_name').autocomplete({
+        minLength: 2, source: data,
+        select: function(e, ui) {
+          $('#item_id').val(ui.item.id);
+          $('tr.item_name .possession_existing_item').html(ui.item.label);
+          $('tr.item_type .possession_existing_item').html(ui.item.category);
+          if (ui.item.optimal_rank) {
+            $('tr.item_optimal_rank .possession_existing_item').html(ui.item.optimal_rank);
+          } else {
+            $('tr.item_optimal_rank').hide();
+          }
+          var tmp = $('.possession_new_item').hide();
+          $('.possession_existing_item').show();
+          tmp.find('input, select').attr('disabled', true);
+        }
+      });
+    });
+
+    var dialog = $('#add-item-dialog').dialog({
       autoOpen: false, title: 'Add item to your inventory',
       width: 'auto', buttons: {
         "Submit": function() {
@@ -94,11 +118,18 @@
     dialog.find('form').submit(function() {
       var f = $(this);
       $.post(f.attr('action'), f.serialize(), function(data, textStatus, jqXHR) {
-        // do stuff
+        if ('errors' in data) {
+          alert("OH NOES!");
+        }
+        else {
+          alert('ADD THE THING!');
+          dialog.dialog('close');
+          resetForm();
+        }
       });
       return false;
     });
-    $('#add-items-button').button({
+    $('#add-item-button').button({
       icons: { primary: 'ui-icon-circle-plus' }
     }).click(function() { dialog.dialog('open'); return false });
   });

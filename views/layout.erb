@@ -13,15 +13,14 @@
   <body>
     <div id="main" class="container_12">
       <div id="header">
-        <% if current_user %>
-          <div id="title" class="grid_6"><%= @title %></div>
-          <div id="userinfo" class="grid_6">
+        <div id="title" class="grid_6">
+          FFXIV Tracker: <%= @title %>
+        </div>
+        <div id="userinfo" class="grid_6">
+          <% if current_user %>
             <strong>You</strong>: <%= current_user.name %>; <strong>Character</strong>: <%= current_character.name %>
-          </div>
-          <div class="clear"></div>
-        <% else %>
-          <div id="title" class="grid_12"><%= @title %></div>
-        <% end %>
+          <% end %>
+        </div>
         <div class="clear"></div>
       </div>
       <div class="grid_12">
