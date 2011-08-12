@@ -1,6 +1,8 @@
 module FFXIV
   class Application < Sinatra::Base
     set :root, Root.to_s
+    set :method_override, true
+    set :logging, true
     use Rack::Session::Cookie, :secret => YAML.load_file(Root + "config" + "secret.yml").to_s
 
     opts = {:required => [], :optional => []}
@@ -60,7 +62,7 @@ module FFXIV
 
     get '/' do
       authenticate!
-      @possessions = current_character.possessions_dataset.eager_graph(:item => :category).order(:item__position).all
+      @possessions = current_character.possessions_dataset.eager_graph(:item => :category).order(:item__position, :item__id).all
       @categories = Category.order(:row_id, :name).all
       erb :index
     end
@@ -87,10 +89,22 @@ module FFXIV
       possession.character = current_character
       if possession.valid?
         possession.save
-        {'possession' => possession.values}.to_json
+        item = possession.item
+        {'possession' => {:id => possession.id, :item => item.name, :category => item.category.name, :keep => possession.keep, :note => possession.note}}.to_json
       else
         {'errors' => possession.errors}.to_json
       end
+    end
+
+    put '/possessions/:id.json' do
+      authenticate!(:redirect => false)
+      content_type 'application/json'
+
+      possession = Possession[params[:id]]
+      halt 404  if possession.nil?
+      
+      possession.update(params[:possession])
+      "true"
     end
 
     get '/login' do

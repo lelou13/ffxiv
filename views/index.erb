@@ -2,7 +2,7 @@
 <% if @possessions.empty? %>
   <p>You don't have anything in your inventory.</p>
 <% else %>
-  <table>
+  <table id="possessions">
     <thead>
       <tr>
         <th>Item</th>
@@ -16,7 +16,13 @@
         <tr>
           <td><%= possession.item.name %></td>
           <td><%= possession.item.category.name %></td>
-          <td><%= possession.keep %></td>
+          <td>
+            <form action="/possessions/<%= possession.id %>.json">
+              <input type="hidden" name="_method" value="put" />
+              <input type="hidden" name="possession[keep]" value="0" />
+              <input class="possession_keep" type="checkbox" name="possession[keep]" value="1"<%= ' checked="checked"' if possession.keep %> />
+            </form>
+          </td>
           <td><%= possession.note %></td>
         </tr>
       <% end %>
@@ -75,11 +81,26 @@
     </table>
   </form>
 </div>
-
+<script id="possession_template" type="text/x-jquery-tmpl">
+  <tr>
+    <td>${item}</td>
+    <td>${category}</td>
+    <td>
+      <form action="/possessions/${id}.json">
+        <input type="hidden" name="_method" value="put" />
+        <input type="hidden" name="possession[keep]" value="0" />
+        <input class="possession_keep" type="checkbox" name="possession[keep]" value="1" {{if keep}}checked="checked"{{/if}} />
+      </form>
+    </td>
+    <td>${note}</td>
+  </tr>
+</script>
 <script type="text/javascript">
   function resetForm() {
     $('.possession_existing_item').hide();
     $('.possession_new_item').show().find('input, select').val('');
+    $('#possession_keep').attr('checked', false);
+    $('#possession_note').val('');
     $('#item_id').val('');
     $('tr.item_optimal_rank').show();
   }
@@ -107,30 +128,37 @@
     var dialog = $('#add-item-dialog').dialog({
       autoOpen: false, title: 'Add item to your inventory',
       width: 'auto', buttons: {
-        "Submit": function() {
+        "Add": function() {
           $(this).find('form').submit();
+          return false;
         },
-        "Cancel": function() {
+        "Close": function() {
           $(this).dialog('close');
+          return false;
         }
       }
     });
-    dialog.find('form').submit(function() {
+    dialog.find('form').submit(function(e) {
+      e.preventDefault();
       var f = $(this);
       $.post(f.attr('action'), f.serialize(), function(data, textStatus, jqXHR) {
         if ('errors' in data) {
           alert("OH NOES!");
         }
         else {
-          alert('ADD THE THING!');
-          dialog.dialog('close');
+          var p = data.possession;
+          $('#possession_template').tmpl(p).appendTo('#possessions tbody');
           resetForm();
+          $('#item_name').focus();
         }
       });
-      return false;
     });
     $('#add-item-button').button({
       icons: { primary: 'ui-icon-circle-plus' }
     }).click(function() { dialog.dialog('open'); return false });
+    $('.possession_keep').click(function() {
+      var f = $(this).closest('form');
+      $.post(f.attr('action'), f.serialize());
+    });
   });
 </script>
