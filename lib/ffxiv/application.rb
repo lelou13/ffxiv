@@ -63,7 +63,7 @@ module FFXIV
 
     get '/' do
       authenticate!
-      @possessions = current_character.possessions_dataset.eager_graph(:item => :category).order(:item__position, :item__id).all
+      @notes = current_character.notes_dataset.eager_graph(:item => :category).order(:item__position, :item__id).all
       @categories = Category.order(:row_id, :name).all
       erb :index
     end
@@ -82,30 +82,30 @@ module FFXIV
       end.to_json
     end
 
-    post '/possessions.json' do
+    post '/notes.json' do
       authenticate!(:redirect => false)
       content_type 'application/json'
 
-      possession = Possession.new(params['possession'])
-      possession.character = current_character
-      if possession.valid?
-        possession.save
-        item = possession.item
+      note = Note.new(params['note'])
+      note.character = current_character
+      if note.valid?
+        note.save
+        item = note.item
         price = item.prices.first
-        {'possession' => {'id' => possession.id, 'item' => item.name, 'category' => item.category.name, 'keep' => possession.keep, 'note' => possession.note, 'item_id' => possession.item_id, 'price' => price ? price.value : nil}}.to_json
+        {'note' => {'id' => note.id, 'item' => item.name, 'category' => item.category.name, 'keep' => note.keep, 'note' => note.note, 'item_id' => note.item_id, 'price' => price ? price.value : nil}}.to_json
       else
-        {'errors' => possession.errors}.to_json
+        {'errors' => note.errors}.to_json
       end
     end
 
-    put '/possessions/:id.json' do
+    put '/notes/:id.json' do
       authenticate!(:redirect => false)
       content_type 'application/json'
 
-      possession = Possession[params[:id]]
-      halt 404  if possession.nil?
+      note = Note[params[:id]]
+      halt 404  if note.nil?
 
-      possession.update(params[:possession])
+      note.update(params[:note])
       "true"
     end
 
