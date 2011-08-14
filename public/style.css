@@ -60,7 +60,11 @@ body {
   margin-left: 1.5em;
 }
 
-table td {
-  padding: 0.2em;
+table td, table th {
+  padding: 0.2em 0.5em;
   vertical-align: middle;
+}
+table th {
+  font-weight: bold;
+  border-bottom: 2px solid gray;
 }

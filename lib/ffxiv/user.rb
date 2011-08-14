@@ -2,6 +2,7 @@ module FFXIV
   class User < Sequel::Model
     set_restricted_columns(:provider, :uid)
     one_to_many :characters
+    one_to_many :prices
 
     plugin :nested_attributes
     nested_attributes(:characters) { |hsh| hsh[:name].empty? }

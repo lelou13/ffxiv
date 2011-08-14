@@ -3,6 +3,7 @@ module FFXIV
     set :root, Root.to_s
     set :method_override, true
     set :logging, true
+    set :erb, :trim => '-'
     use Rack::Session::Cookie, :secret => YAML.load_file(Root + "config" + "secret.yml").to_s
 
     opts = {:required => [], :optional => []}
@@ -90,7 +91,8 @@ module FFXIV
       if possession.valid?
         possession.save
         item = possession.item
-        {'possession' => {:id => possession.id, :item => item.name, :category => item.category.name, :keep => possession.keep, :note => possession.note}}.to_json
+        price = item.prices.first
+        {'possession' => {'id' => possession.id, 'item' => item.name, 'category' => item.category.name, 'keep' => possession.keep, 'note' => possession.note, 'item_id' => possession.item_id, 'price' => price ? price.value : nil}}.to_json
       else
         {'errors' => possession.errors}.to_json
       end
@@ -102,9 +104,27 @@ module FFXIV
 
       possession = Possession[params[:id]]
       halt 404  if possession.nil?
-      
+
       possession.update(params[:possession])
       "true"
+    end
+
+    post '/items/:id/prices.json' do
+      authenticate!(:redirect => false)
+      content_type 'application/json'
+
+      item = Item[params[:id]]
+      halt 404  if item.nil?
+
+      price = Price.new(params['price'])
+      price.item = item
+      price.user = current_user
+      if price.valid?
+        price.save
+        {'price' => {:id => price.id, :value => price.value}}.to_json
+      else
+        {'errors' => price.errors}.to_json
+      end
     end
 
     get '/login' do

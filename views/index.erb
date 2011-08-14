@@ -9,13 +9,16 @@
         <th>Type</th>
         <th>Keep?</th>
         <th>Note</th>
+        <th>Price</th>
       </tr>
     </thead>
     <tbody>
       <% @possessions.each_with_index do |possession, i| %>
+        <%- item = possession.item -%>
+        <%- price = item.prices.first -%>
         <tr>
-          <td><%= possession.item.name %></td>
-          <td><%= possession.item.category.name %></td>
+          <td><%= item.name %></td>
+          <td><%= item.category.name %></td>
           <td>
             <form action="/possessions/<%= possession.id %>.json">
               <input type="hidden" name="_method" value="put" />
@@ -23,7 +26,17 @@
               <input class="possession_keep" type="checkbox" name="possession[keep]" value="1"<%= ' checked="checked"' if possession.keep %> />
             </form>
           </td>
-          <td><%= possession.note %></td>
+          <td>
+            <form action="/possessions/<%= possession.id %>.json">
+              <input type="hidden" name="_method" value="put" />
+              <input class="possession_note" type="text" name="possession[note]" value="<%= possession.note %>" />
+            </form>
+          </td>
+          <td>
+            <form action="/items/<%= possession.item_id %>/prices.json">
+              <input class="price_value" type="text" name="price[value]" value="<%= price.value if price %>" />
+            </form>
+          </td>
         </tr>
       <% end %>
     </tbody>
@@ -93,6 +106,11 @@
       </form>
     </td>
     <td>${note}</td>
+    <td>
+      <form action="/items/${item_id}/prices.json">
+        <input class="price_value" type="text" name="price[value]" value="${price}" />
+      </form>
+    </td>
   </tr>
 </script>
 <script type="text/javascript">
@@ -156,7 +174,16 @@
     $('#add-item-button').button({
       icons: { primary: 'ui-icon-circle-plus' }
     }).click(function() { dialog.dialog('open'); return false });
+
     $('.possession_keep').click(function() {
+      var f = $(this).closest('form');
+      $.post(f.attr('action'), f.serialize());
+    });
+    $('.possession_note').change(function() {
+      var f = $(this).closest('form');
+      $.post(f.attr('action'), f.serialize());
+    });
+    $('.price_value').change(function() {
       var f = $(this).closest('form');
       $.post(f.attr('action'), f.serialize());
     });
