@@ -42,6 +42,22 @@
     </tbody>
   </table>
 <% end %>
+<table id="items">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+  <%- @items.each do |item| -%>
+    <tr>
+      <td><%= item.name %></td>
+      <td><%= item.category.name %></td>
+    </tr>
+  <%- end -%>
+  </tbody>
+</table>
 <p>
   <button id="add-item-button">Add items</button>
 </p>

@@ -63,7 +63,8 @@ module FFXIV
 
     get '/' do
       authenticate!
-      @notes = current_character.notes_dataset.eager_graph(:item => :category).order(:item__position, :item__id).all
+      @items = Item.eager_graph(:notes).filter({:notes__character_id => nil} | {:notes__character_id => current_character.id}).order(:items__position, :items__name).all
+      @notes = current_character.notes_dataset.eager_graph(:item => :category).filter(:notes__owned => true).order(:item__position, :item__id).all
       @categories = Category.order(:row_id, :name).all
       erb :index
     end
