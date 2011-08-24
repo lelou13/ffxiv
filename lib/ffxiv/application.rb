@@ -63,8 +63,8 @@ module FFXIV
 
     get '/' do
       authenticate!
-      @items = Item.eager_graph(:notes).filter({:notes__character_id => nil} | {:notes__character_id => current_character.id}).order(:items__position, :items__name).all
-      @notes = current_character.notes_dataset.eager_graph(:item => :category).filter(:notes__owned => true).order(:item__position, :item__id).all
+      @all_items = Item.eager_graph(:notes).filter({:notes__character_id => nil} | {:notes__character_id => current_character.id}).order(:items__position, :items__name).all
+      @owned_items = Item.eager_graph(:notes).filter({:notes__character_id => current_character.id, :notes__owned => true}).order(:items__position, :items__id).all
       @categories = Category.order(:row_id, :name).all
       erb :index
     end
@@ -73,41 +73,15 @@ module FFXIV
       authenticate!(:redirect => false)
       content_type 'application/json'
 
-      ds = Item.order(:items__name).eager(:category)
-      if params['q']
-        ds = ds.filter(:items__name.like("#{params['q']}%"))
+      ds = Item.eager_graph(:notes).filter({:notes__character_id => nil} | ({:notes__character_id => current_character.id} & ~{:notes__owned => true})).order(:items__name)
+      if params['term']
+        ds = ds.filter(:items__name.like("#{params['term']}%"))
       end
 
       ds.all.collect do |item|
-        {'label' => item.name, 'id' => item.id, 'category' => item.category.name, 'optimal_rank' => item.optimal_rank}
+        note = item.notes.first
+        {'label' => item.name, 'id' => item.id, 'category_id' => item.category_id, 'rank' => item.optimal_rank, 'note' => note.note}
       end.to_json
-    end
-
-    post '/notes.json' do
-      authenticate!(:redirect => false)
-      content_type 'application/json'
-
-      note = Note.new(params['note'])
-      note.character = current_character
-      if note.valid?
-        note.save
-        item = note.item
-        price = item.prices.first
-        {'note' => {'id' => note.id, 'item' => item.name, 'category' => item.category.name, 'keep' => note.keep, 'note' => note.note, 'item_id' => note.item_id, 'price' => price ? price.value : nil}}.to_json
-      else
-        {'errors' => note.errors}.to_json
-      end
-    end
-
-    put '/notes/:id.json' do
-      authenticate!(:redirect => false)
-      content_type 'application/json'
-
-      note = Note[params[:id]]
-      halt 404  if note.nil?
-
-      note.update(params[:note])
-      "true"
     end
 
     post '/items/:id/prices.json' do
@@ -126,6 +100,46 @@ module FFXIV
       else
         {'errors' => price.errors}.to_json
       end
+    end
+
+    post '/notes.json' do
+      authenticate!(:redirect => false)
+      content_type 'application/json'
+
+      note = Note.new(params['note'])
+      note.character = current_character
+      if note.valid?
+        note.save
+        item = note.item
+        price = item.prices.first
+        {'note' => {'id' => note.id, 'item' => item.name, 'category' => item.category.name, 'note' => note.note || '', 'rank' => item.optimal_rank || '', 'item_id' => note.item_id, 'price' => price ? price.value : nil}}.to_json
+      else
+        {'errors' => note.errors}.to_json
+      end
+    end
+
+    put '/notes/:id.json' do
+      authenticate!(:redirect => false)
+      content_type 'application/json'
+
+      note = Note[params[:id]]
+      halt 404  if note.nil?
+
+      note.update(params[:note])
+      "true"
+    end
+
+    get '/prices/edit' do
+      @items = Item.eager_graph(:notes).filter({:notes__character_id => current_character.id, :notes__owned => true}).order(:items__category_id, :items__position, :items__id).all
+      erb :prices
+    end
+
+    post '/prices' do
+      params[:prices].each_pair do |item_id, value|
+        next  if value !~ /^\d+$/
+        Price.create(:item_id => item_id, :user_id => current_user.id, :value => value)
+      end
+      redirect '/'
     end
 
     get '/login' do

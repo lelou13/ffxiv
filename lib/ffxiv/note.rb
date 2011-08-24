@@ -5,7 +5,7 @@ module FFXIV
     many_to_one :character
 
     plugin :nested_attributes
-    nested_attributes(:item)
+    nested_attributes(:item, :strict => false)
 
     def validate
       super

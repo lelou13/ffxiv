@@ -1,0 +1,24 @@
+<% @title = "Update prices" %>
+<form id="edit_prices_form" action="/prices" method="post">
+  <input type="hidden" name="_method" value="post" />
+  <table id="owned_items">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Category</th>
+        <th>Rank</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @items.each_with_index do |item, i| %>
+        <tr>
+          <td><%= item.name %></td>
+          <td><%= item.category.name %></td>
+          <td><%= item.optimal_rank %></td>
+          <td><input type="text" name="prices[<%= item.id %>]" /></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</form>

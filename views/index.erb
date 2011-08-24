@@ -1,207 +1,76 @@
 <% @title = "Your inventory" %>
-<% if @notes.empty? %>
-  <p>You don't have anything in your inventory.</p>
-<% else %>
-  <table id="notes">
+<form id="new_note_form" action="/notes.json" method="post">
+  <input id="note_owned" type="hidden" name="note[owned]" value="1" />
+  <input id="item_id" type="hidden" name="note[item_id]" value="" />
+  <table id="owned_items">
     <thead>
       <tr>
         <th>Item</th>
         <th>Type</th>
-        <th>Keep?</th>
+        <th>Rank</th>
         <th>Note</th>
         <th>Price</th>
       </tr>
     </thead>
     <tbody>
-      <% @notes.each_with_index do |note, i| %>
-        <%- item = note.item -%>
+      <tr>
+        <td><input id="item_name" type="text" name="note[item_attributes][name]" /></td>
+        <td>
+          <select id="item_category_id" name="note[item_attributes][category_id]">
+            <option></option>
+            <%- @categories.each do |category| -%>
+              <option value="<%= category.id %>"><%= category.name %></option>
+            <%- end -%>
+          </select>
+        </td>
+        <td><input id="item_optimal_rank" type="text" name="note[item_attributes][optimal_rank]" maxlength="2" size="2" /></td>
+        <td><input id="note_note" type="text" name="note[note]" /></td>
+        <td></td>
+      </tr>
+      <% @owned_items.each_with_index do |item, i| %>
+        <%- note = item.notes.first -%>
         <%- price = item.prices.first -%>
         <tr>
           <td><%= item.name %></td>
           <td><%= item.category.name %></td>
-          <td>
-            <form action="/notes/<%= note.id %>.json">
-              <input type="hidden" name="_method" value="put" />
-              <input type="hidden" name="note[keep]" value="0" />
-              <input class="note_keep" type="checkbox" name="note[keep]" value="1"<%= ' checked="checked"' if note.keep %> />
-            </form>
-          </td>
-          <td>
-            <form action="/notes/<%= note.id %>.json">
-              <input type="hidden" name="_method" value="put" />
-              <input class="note_note" type="text" name="note[note]" value="<%= note.note %>" />
-            </form>
-          </td>
-          <td>
-            <form action="/items/<%= note.item_id %>/prices.json">
-              <input class="price_value" type="text" name="price[value]" value="<%= price.value if price %>" />
-            </form>
-          </td>
+          <td><%= item.optimal_rank %></td>
+          <td><%= note ? note.note : "" %></td>
+          <td><%= price ? price.value : "" %></td>
         </tr>
       <% end %>
     </tbody>
   </table>
-<% end %>
-<table id="items">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-    </tr>
-  </thead>
-  <tbody>
-  <%- @items.each do |item| -%>
-    <tr>
-      <td><%= item.name %></td>
-      <td><%= item.category.name %></td>
-    </tr>
-  <%- end -%>
-  </tbody>
-</table>
-<p>
-  <button id="add-item-button">Add items</button>
-</p>
-<div id="add-item-dialog" style="display: none;">
-  <form id="add-item-form" action="/notes.json">
-    <input id="item_id" type="hidden" name="note[item_id]" />
-    <table>
-      <tbody>
-        <tr class="item_name">
-          <td><label for="item_name">Item:</label></td>
-          <td>
-            <div class="note_new_item">
-              <input id="item_name" type="text" name="note[item_attributes][name]" />
-            </div>
-            <div class="note_existing_item" style="display: none;"></div>
-          </td>
-        </tr>
-        <tr class="item_type">
-          <td><label for="item_type">Type:</label></td>
-          <td>
-            <div class="note_new_item">
-              <select id="item_type" name="note[item_attributes][category_id]">
-                <option></option>
-                <% @categories.each do |category| %>
-                  <option value="<%= category.id %>"><%= category.name %></option>
-                <% end %>
-              </select>
-            </div>
-            <div class="note_existing_item" style="display: none;"></div>
-          </td>
-        </tr>
-        <tr class="item_optimal_rank">
-          <td><label for="item_optimal_rank">Rank:</label></td>
-          <td>
-            <div class="note_new_item">
-              <input id="item_optimal_rank" type="text" name="note[item_attributes][optimal_rank]" />
-            </div>
-            <div class="note_existing_item" style="display: none;"></div>
-          </td>
-        </tr>
-        <tr class="note_keep">
-          <td><label for="note_keep">Keep?</label></td>
-          <td><input id="note_keep" type="checkbox" name="note[keep]" /></td>
-        </tr>
-        <tr class="note_note">
-          <td><label for="note_note">Note:</label></td>
-          <td><input id="note_note" type="text" name="note[note]" /></td>
-        </tr>
-      </tbody>
-    </table>
-  </form>
-</div>
-<script id="note_template" type="text/x-jquery-tmpl">
-  <tr>
-    <td>${item}</td>
-    <td>${category}</td>
-    <td>
-      <form action="/notes/${id}.json">
-        <input type="hidden" name="_method" value="put" />
-        <input type="hidden" name="note[keep]" value="0" />
-        <input class="note_keep" type="checkbox" name="note[keep]" value="1" {{if keep}}checked="checked"{{/if}} />
-      </form>
-    </td>
-    <td>${note}</td>
-    <td>
-      <form action="/items/${item_id}/prices.json">
-        <input class="price_value" type="text" name="price[value]" value="${price}" />
-      </form>
-    </td>
-  </tr>
-</script>
+</form>
+
 <script type="text/javascript">
-  function resetForm() {
-    $('.note_existing_item').hide();
-    $('.note_new_item').show().find('input, select').val('');
-    $('#note_keep').attr('checked', false);
-    $('#note_note').val('');
-    $('#item_id').val('');
-    $('tr.item_optimal_rank').show();
-  }
-
   $(function() {
-    $.getJSON('/items.json', function(data, status, xhr) {
-      $('#item_name').autocomplete({
-        minLength: 2, source: data,
-        select: function(e, ui) {
-          $('#item_id').val(ui.item.id);
-          $('tr.item_name .note_existing_item').html(ui.item.label);
-          $('tr.item_type .note_existing_item').html(ui.item.category);
-          if (ui.item.optimal_rank) {
-            $('tr.item_optimal_rank .note_existing_item').html(ui.item.optimal_rank);
-          } else {
-            $('tr.item_optimal_rank').hide();
-          }
-          var tmp = $('.note_new_item').hide();
-          $('.note_existing_item').show();
-          tmp.find('input, select').attr('disabled', true);
-        }
-      });
-    });
-
-    var dialog = $('#add-item-dialog').dialog({
-      autoOpen: false, title: 'Add item to your inventory',
-      width: 'auto', buttons: {
-        "Add": function() {
-          $(this).find('form').submit();
-          return false;
-        },
-        "Close": function() {
-          $(this).dialog('close');
-          return false;
-        }
-      }
-    });
-    dialog.find('form').submit(function(e) {
-      e.preventDefault();
+    $('#new_note_form').submit(function(e) {
       var f = $(this);
       $.post(f.attr('action'), f.serialize(), function(data, textStatus, jqXHR) {
-        if ('errors' in data) {
-          alert("OH NOES!");
-        }
-        else {
-          var p = data.note;
-          $('#note_template').tmpl(p).appendTo('#notes tbody');
-          resetForm();
+        if ('note' in data) {
+          var note = data['note'];
+          $('#owned_items tbody').append('<tr><td>'+note.item+'</td><td>'+note.category+'</td><td>'+note.rank+'</td><td>'+note.note+'</td></tr>');
+          f.find('input:not(#item_owned), select').val('');
           $('#item_name').focus();
         }
-      });
+      }, 'json');
+      e.preventDefault();
+    }).bind('keypress', function(e) {
+      if (e.keyCode == 13) {
+        $(this).submit();
+      }
     });
-    $('#add-item-button').button({
-      icons: { primary: 'ui-icon-circle-plus' }
-    }).click(function() { dialog.dialog('open'); return false });
 
-    $('.note_keep').click(function() {
-      var f = $(this).closest('form');
-      $.post(f.attr('action'), f.serialize());
-    });
-    $('.note_note').change(function() {
-      var f = $(this).closest('form');
-      $.post(f.attr('action'), f.serialize());
-    });
-    $('.price_value').change(function() {
-      var f = $(this).closest('form');
-      $.post(f.attr('action'), f.serialize());
+    $('#item_name').autocomplete({
+      source: '/items.json',
+      minLength: 2,
+      select: function(e, ui) {
+        var item = ui.item;
+        $('#item_id').val(item.id);
+        $('#item_category_id').val(item.category_id).attr('disabled', true);
+        $('#item_optimal_rank').val(item.rank).attr('disabled', true);
+        $('#note_note').val(item.note).focus();
+      }
     });
   });
 </script>
